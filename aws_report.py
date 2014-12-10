@@ -9,7 +9,29 @@ import pytz
 import time
 import sendgrid
 
-def main():
+def main(argv=sys.argv):
+
+  email = False
+
+  try:
+    opts, args = getopt.getopt(argv, "u:p:f:t:mh", ["user=", "password=", "from=", "to=", "mail", "help"])
+  except getopt.GetoptError:
+    usage()
+    sys.exit(2)
+  for opt, arg in opts:
+    if opt in ("-h", "--help"):
+        usage()
+        sys.exit()
+    elif opt in ("-u", "--user"):
+        sg_user = arg
+    elif opt in ("-p", "--password"):
+        sg_password = arg
+    elif opt in ("-t", "--to"):
+        email_to = arg
+    elif opt in ("-f", "--from"):
+        email_from = arg
+    elif opt in ("-m", "--mail"):
+        email = True
 
   current_time = datetime.datetime.now(pytz.utc)
   yesterday_time = current_time - datetime.timedelta(days=1)
@@ -149,7 +171,7 @@ def main():
   user_data = requests.get(user_search, data=json.dumps(user_request)).json()
 
   grouped = dict()
-  doc = "This report is a list of all instances that will be terminated by the SysOps EC2 audit scripts in the last 24 hours for tag scheme violations come January 12, 2015.  To prevent interruption of work or loss of data you must tag instances to the documented scheme at https://confluence.puppetlabs.com/display/OPS/Cloud+Asset+Management+Standards.\n"
+  doc = "This report is a list of all instances that will be terminated by the SysOps EC2 audit scripts in the last 24 hours for tag scheme violations come January 12, 2015.  To prevent interruption of work or loss of data you must tag instances to the documented scheme at https://confluence.puppetlabs.com/display/OPS/Cloud+Asset+Management+Standards.\n\n"
 
   users = dict()
   user = str()
@@ -176,14 +198,17 @@ def main():
       doc += ("  " + i + "\n")
     doc += "\n"
 
-  sg = sendgrid.SendGridClient('awsaudit', 'kCulmgJtpXHmXrSjdxuk')
+  if email == True:
+    sg = sendgrid.SendGridClient(sg_user, sg_password)
 
-  message = sendgrid.Mail()
-  message.add_to('SysOps <sysops-dept@puppetlabs.com>')
-  message.set_subject('EC2 Instance Termination Report')
-  message.set_text(doc)
-  message.set_from('Cody Herriges <cody@puppetlabs.com>')
-  status, msg = sg.send(message)
+    message = sendgrid.Mail()
+    message.add_to(email_to)
+    message.set_subject("EC2 Termination Report: " + yesterday_formatted)
+    message.set_text(doc)
+    message.set_from(email_from)
+    status, msg = sg.send(message)
+  else:
+    print(doc)
 
 if __name__ == "__main__":
-  main()
+  main(sys.argv[1:])
