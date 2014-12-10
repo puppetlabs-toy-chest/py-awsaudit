@@ -70,7 +70,7 @@ def get_violators(access, secret, region, tags):
 
   instance_list = []
 
-  not_terminated = { "instance-state-name":["pending", "running", "shutting-down", "stopping", "stopped"] }
+  not_terminated = { "instance-state-name":["running", "shutting-down", "stopping", "stopped"] }
 
   try:
     reservations = conn.get_all_reservations(filters=not_terminated)
