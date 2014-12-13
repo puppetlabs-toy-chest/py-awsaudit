@@ -39,6 +39,7 @@ def main(argv=sys.argv):
   yesterday_formatted = str(yesterday_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + yesterday_time.strftime("%z"))
   current_index = str(current_time.strftime("%Y.%m.%d"))
   yesterday_index = str(yesterday_time.strftime("%Y.%m.%d"))
+  yesterday_email = str(yesterday_time.strftime("%Y-%m-%d"))
 
   user_search = "http://elasticsearch.ops.puppetlabs.net:9200/logstash-" + current_index + ",logstash-" + yesterday_index + "/_search"
   route_search = "http://elasticsearch.ops.puppetlabs.net:9200/aws-audits/_search"
@@ -203,7 +204,7 @@ def main(argv=sys.argv):
 
     message = sendgrid.Mail()
     message.add_to(email_to)
-    message.set_subject("EC2 Termination Report: " + yesterday_formatted)
+    message.set_subject("EC2 Termination Report: " + yesterday_email)
     message.set_text(doc)
     message.set_from(email_from)
     status, msg = sg.send(message)
