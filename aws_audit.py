@@ -94,7 +94,7 @@ def get_violators(access, secret, region, tags, current_time, grace=5):
       if False in present:
         age = (time.mktime(datetime.datetime.now(pytz.utc).timetuple()) - time.mktime(time.strptime(instance.launch_time, '%Y-%m-%dT%H:%M:%S.%fZ'))) / 60
         if age > grace:
-          instance_list.append({'id': instance.id, 'tags': [x+"="+instance.tags[x] for x in instance.tags], 'state': instance.state, 'region': region })
+          instance_list.append({'id': instance.id, 'tags': [x+"="+instance.tags[x] for x in instance.tags], 'state': instance.state, 'region': region, 'age': age })
 
   return instance_list
 
