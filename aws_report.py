@@ -195,7 +195,7 @@ def main(argv=sys.argv):
   grouped = dict()
 
   # Email header.
-  doc = "This report is a list of all instances that will be terminated by the SysOps EC2 audit scripts in the last 24 hours for tag scheme violations come January XX, 2015.  To prevent interruption of work or loss of data you must tag instances to the documented scheme at https://confluence.puppetlabs.com/display/OPS/Tags+and+Tagging.\n\n"
+  doc = "This report is a list of all instances that will be terminated by the SysOps EC2 audit scripts in the last 24 hours for tag scheme violations come February 9th, 2015.  To prevent interruption of work or loss of data you must tag instances to the documented scheme at http://links.puppetlabs.com/tagthecloud.\n\n"
 
   users = dict()
   user = str()
