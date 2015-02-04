@@ -12,12 +12,12 @@ import pytz
 
 def main(argv=sys.argv):
 
-  # Setting default script option parameters before reading command line
-  # options give.  Didn't find a better documented way.
+  # Setting default script options before reading in given command line.
   grace = 5
+  terminate = False
 
   try:
-    opts, args = getopt.getopt(argv, "a:s:r:t:g:h", ["aws_access_key=", "aws_secret_key=", "regions=", "tags=", "grace=",  "help"])
+    opts, args = getopt.getopt(argv, "a:s:r:t:g:kh", ["aws_access_key=", "aws_secret_key=", "regions=", "tags=", "grace=", "terminate",  "help"])
   except getopt.GetoptError:
     usage()
     sys.exit(2)
@@ -25,6 +25,8 @@ def main(argv=sys.argv):
     if opt in ("-h", "--help"):
         usage()
         sys.exit()
+    elif opt in ("-k", "--terminate"):
+        terminate = True
     elif opt in ("-a", "--aws_access_key"):
         aws_access_key = arg
     elif opt in ("-s", "--aws_secret_key"):
@@ -58,7 +60,7 @@ def main(argv=sys.argv):
   violators = []
 
   for region in regions:
-    violators.append(get_violators(aws_access_key, aws_secret_key, region, tags, current_time, grace))
+    violators.append(get_violators(aws_access_key, aws_secret_key, region, tags, current_time, grace, terminate))
 
   # List comprehensions are awesome, replaced all my usual uses of map or
   # blocks in ruby.
@@ -82,7 +84,7 @@ def main(argv=sys.argv):
     requests.post(route_violator, data=json.dumps(v_document))
 
 
-def get_violators(access, secret, region, tags, current_time, grace=5):
+def get_violators(access, secret, region, tags, current_time, grace=5, terminate=False):
   conn = boto.ec2.connect_to_region(region,
       aws_access_key_id=access,
       aws_secret_access_key=secret)
@@ -92,7 +94,7 @@ def get_violators(access, secret, region, tags, current_time, grace=5):
   # Terminating things that are pending is undesirable because instances are
   # likely untagged in this state and it is pretty pointless to try and termiate
   # things taht are already terminating.
-  not_terminated = { "instance-state-name":["running", "shutting-down", "stopping", "stopped"] }
+  not_terminated = { "instance-state-name":["running", "stopped"] }
 
   # Else we'll throw a backtrace if they region is empty
   try:
@@ -118,6 +120,13 @@ def get_violators(access, secret, region, tags, current_time, grace=5):
         if age > grace:
           instance_list.append({'id': instance.id, 'tags': [x+"="+instance.tags[x] for x in instance.tags], 'state': instance.state, 'region': region, 'age': age })
 
+  # After we obtain violators for region we'll terminate them if requested.
+  if terminate:
+    vset = ([i['id'] for i in instance_list])
+    if len(vset) != 0:
+      conn.terminate_instances(instance_ids=vset)
+
+  # Return our list of violators, even if we terminated them for reporting.
   return instance_list
 
 if __name__ == "__main__":
