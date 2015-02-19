@@ -122,6 +122,9 @@ def get_violators(access, secret, region, tags, current_time, grace=5, terminate
 
   # After we obtain violators for region we'll terminate them if requested.
   if terminate:
+    protected = ([i['id'] for i in instance_list if conn.get_instance_attribute(i['id'], 'disableApiTermination')['disableApiTermination'] == True ])
+    for i in protected:
+      conn.modify_instance_attribute(i, 'disableApiTermination', False)
     vset = ([i['id'] for i in instance_list])
     if len(vset) != 0:
       conn.terminate_instances(instance_ids=vset)
