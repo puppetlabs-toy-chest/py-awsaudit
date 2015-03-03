@@ -228,23 +228,24 @@ def main(argv=sys.argv):
 
   # Add a section to our email body for each IAM alias
   for g in grouped:
-    doc += (g + " IAM root account: TO BE TERMINATED" + "\n")
+    doc += (g + " IAM root account: TERMINATED" + "\n")
     for i in grouped[g]:
       doc += ("  " + i + "\n")
     doc += "\n"
 
-  # Send the email via SendGrid
-  if email == True:
-    sg = sendgrid.SendGridClient(sg_user, sg_password)
+  if grouped != ([]):
+    # Send the email via SendGrid
+    if email == True:
+      sg = sendgrid.SendGridClient(sg_user, sg_password)
 
-    message = sendgrid.Mail()
-    message.add_to(email_to)
-    message.set_subject("EC2 Termination Report: " + yesterday_email)
-    message.set_text(doc)
-    message.set_from(email_from)
-    status, msg = sg.send(message)
-  else:
-    print(doc)
+      message = sendgrid.Mail()
+      message.add_to(email_to)
+      message.set_subject("EC2 Termination Report: " + yesterday_email)
+      message.set_text(doc)
+      message.set_from(email_from)
+      status, msg = sg.send(message)
+    else:
+      print(doc)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
