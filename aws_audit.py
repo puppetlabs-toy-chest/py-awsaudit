@@ -116,7 +116,9 @@ def get_violators(access, secret, region, tags, current_time, grace=5, terminate
       if False in present:
         # Only kill things of a certain age to give people time to tag and
         # account for clock drift between local and EC2.
-        age = (time.mktime(datetime.datetime.now(pytz.utc).timetuple()) - time.mktime(time.strptime(instance.launch_time, '%Y-%m-%dT%H:%M:%S.%fZ'))) / 60
+        now = time.mktime(current_time.utctimetuple())
+        launched = time.mktime(datetime.datetime.strptime(instance.launch_time, '%Y-%m-%dT%H:%M:%S.%fZ').utctimetuple())
+        age = (now - launched) / 60
         if age > grace:
           instance_list.append({'id': instance.id, 'tags': [x+"="+instance.tags[x] for x in instance.tags], 'state': instance.state, 'region': region, 'age': age })
 
