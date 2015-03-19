@@ -237,7 +237,7 @@ def main(argv=sys.argv):
       doc += ("  " + i + "\n")
     doc += "\n"
 
-  if grouped != ([]):
+  if grouped != {}:
     # Send the email via SendGrid
     if email == True:
       sg = sendgrid.SendGridClient(sg_user, sg_password)
