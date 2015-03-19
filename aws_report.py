@@ -203,7 +203,11 @@ def main(argv=sys.argv):
   # Reducing the cloudtail data obtained from logstash to a simple lookup table
   # of instanceId to username mappings.
   for u in user_data['hits']['hits']:
-    users[u['_source']['responseElements']['instancesSet']['items'][0]['instanceId']] = u['_source']['userIdentity']['userName']
+    try:
+      users[u['_source']['responseElements']['instancesSet']['items'][0]['instanceId']] = u['_source']['userIdentity']['userName']
+    except KeyError:
+      users[u['_source']['responseElements']['instancesSet']['items'][0]['instanceId']] = "n/a"
+
 
   # Iterate through all the data obtained from aws_audits and create a key for
   # each IAM alias, set to an empty set.
