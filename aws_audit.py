@@ -47,15 +47,16 @@ def main(argv=sys.argv):
   # just boto but IAM for all regions is the same so we only do this once...I
   # randomly picked us-west-2 because I am from Oregon and run this script most
   # likely from Oregon.
-  iam = boto.iam.connect_to_region("us-west-2",
-      aws_access_key_id=aws_access_key,
-      aws_secret_access_key=aws_secret_key)
+  iam = boto.iam.connect_to_region("us-west-2", aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
 
   alias = iam.get_account_alias()['list_account_aliases_response']['list_account_aliases_result']['account_aliases'][0]
 
   # Wow! Do I ever hate dealing with time.
   current_time = datetime.datetime.now(pytz.utc)
   time_formatted = str(current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + current_time.strftime("%z"))
+
+  # Check to see if we can query the API reliably.
+  canary(aws_access_key, aws_secret_key, regions, tags, current_time)
 
   violators = []
 
@@ -85,9 +86,7 @@ def main(argv=sys.argv):
 
 
 def get_violators(access, secret, region, tags, current_time, grace=5, terminate=False):
-  conn = boto.ec2.connect_to_region(region,
-      aws_access_key_id=access,
-      aws_secret_access_key=secret)
+  conn = boto.ec2.connect_to_region(region, aws_access_key_id=access, aws_secret_access_key=secret)
 
   instance_list = []
 
@@ -133,6 +132,28 @@ def get_violators(access, secret, region, tags, current_time, grace=5, terminate
 
   # Return our list of violators, even if we terminated them for reporting.
   return instance_list
+
+def canary(access, secret, regions, tags, current_time):
+  for region in regions:
+    conn = boto.ec2.connect_to_region(region, aws_access_key_id=access, aws_secret_access_key=secret)
+
+    # We only care about a single instance, the one I created as a canary for which I know the tags of.
+    canary = conn.get_all_instances(filters={
+        'tag:created_by':'cody',
+        'tag:project':'API canary',
+        'tag:department':'sysops',
+        'tag:Name':'api-canary-' + region,
+        'instance-state-name':['stopped'],
+      }
+    )
+
+    # If we don't find our canary we exit immediately.
+    if len(canary) == 0:
+      sys.exit("Unable to validate canary from region: " + region)
+
+    # Update the canary's timestamp so we can track down region failures.
+    i = canary[0].instances[0].id
+    conn.create_tags(i, { 'canary_timestamp':current_time })
 
 if __name__ == "__main__":
   main(sys.argv[1:])
