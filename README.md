@@ -171,16 +171,16 @@ Reporting on what and how much is easier once everyone adheres to a strict schem
 ### Beginning with aws_audit
 
 * Install pre-requisites using pip
-* Run aws_audit.py command with options: access and secret AWS API keys, comma seperated list of regions to check, and tag scheme are required.  If you want to modify the grace period you give to people or if you choose to terminate violations, those options are optional.
+* Run awsaudit command with options: access and secret AWS API keys, comma seperated list of regions to check, and tag scheme are required.  If you want to modify the grace period you give to people or if you choose to terminate violations, those options are optional.
 
 ```
 pip install -r requirements.txt
-aws_audit.py -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1,eu-west-1,sa-east-1,ap-southeast-2,ap-southeast-1,ap-northeast-1,eu-central-1" -t "created_by,department,project" -g 45 --terminate
+awsaudit -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1,eu-west-1,sa-east-1,ap-southeast-2,ap-southeast-1,ap-northeast-1,eu-central-1" -t "created_by,department,project" -g 45 --terminate
 ```
 
 ## Usage
 
-`aws_audit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-h|--help]`
+`aws_audit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-c|--confirm] [-h|--help]`
 
 `--aws_access_key`
 
@@ -206,25 +206,80 @@ aws_audit.py -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-ea
 
 > Terminate instances that are in violation of the scheme and have an expired grace period.
 
+`--confirm`
+
+> Confirm that the value set for the created_by tag is an actual IAM user.
+
 `--help`
 
 > Prints out command usage information.
 
 ## Reference
 
-### Functions
+### Methods
 
-`main`
+`awsaudit.AwsAudit.audit`
 
-> A lot of stuff happens here: command line parsing, calling other functions, export to ElasticSearch
+> The method that basically kicks everything off and steps down through the process of doing an audit; calling other methods, probably most impotantly creating
+>
+> **Parameters**: none
+>
+> **Return Type**: none
+>
+> **Returns**: none
 
-`get_violators`
+`awsaudit.AwsAudit.alias`
 
-> Function that does the queries against EC2 API and validates if they match required scheme.  Termination of violators happens here to, probably inapropriately so.
+> Queries IAM to obtain the user defined alias for the AWS account because the number based AWS identifier doesn't often mean much to a human.
+>
+> **Parameters**: none
+>
+> **Return Type**: string
+>
+> **Returns**: A single string which is the AWS account alias for the IAM root.
 
-`canary`
+`awsaudit.AwsAudit.send`
 
-> Each time the script runs this function makes sure that we can obtain an expected set of data from Amazon before we continue onto doing anything destructive.
+> Compiles an ElasticSearch document and sends it to our ElasticSearch URL.
+>
+> **Parameters**:
+> * violators (*list of dictionaries*) - All the violators found from quering all desired regions.
+> * account (*string*) - The account you are associating these violators with.
+>
+> **Return Type**: N/A
+>
+> **Returns**: N/A
+
+`awsaudit.AwsAuditRegion.canary`
+
+> Special precrafted query to return a defined instance that we will used to validate that the AWS API in a region is functional.
+>
+> **Parameters**: none
+>
+> **Return Type**: none
+>
+> **Returns**: Non-zero and exits process if canary host is not found.
+
+`awsaudit.AwsAuditRegion.violators`
+
+> Queries a EC2 region for all "active" instances to verify their tag scheme.
+>
+> **Parameters**: none
+>
+> **Return Type**: list
+>
+> **Returns**: A list of dictionaries containing information about a violating instance.
+
+`awsaudit.AwsAuditRgion.terminate`
+
+> When requested, will first check if instance ID is protected from API initiated termination and if True will flip it to false then kill all instance IDs.
+>
+> **Parameters**:
+> * instances (*list*) - A list of instance IDs.
+>
+> **Return Type**: none
+>
+> **Returns**: none
 
 ## Limitations
 
@@ -234,6 +289,6 @@ aws_audit.py -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-ea
 
 ## Development
 
-Is in horrible need of a rewrite/restructuring since it wasn't written with modularity in mind or packaging.  This script was the first time I really sat down to write my own python from scratch and while I am mostly happy with the attempt, I wrote it to just work and paid little attention to structure.
+This script was the first time I really sat down to write my own python from scratch and while I am mostly happy with the attempt it could still do with some improvement and features added.
 
 A couple things to remember when working on the code base: nothing works if you haven't deployed canary hosts, pay close attention to how you manage time and stick with UTC, these scripts **terminate** instances and will cause loss of data.
