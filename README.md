@@ -174,13 +174,14 @@ Reporting on what and how much is easier once everyone adheres to a strict schem
 * Run awsaudit command with options: access and secret AWS API keys, comma seperated list of regions to check, and tag scheme are required.  If you want to modify the grace period you give to people or if you choose to terminate violations, those options are optional.
 
 ```
-pip install -r requirements.txt
+python setup.py sdist
+pip install dist/awsaudit-x.y.z.tar.gz
 awsaudit -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1,eu-west-1,sa-east-1,ap-southeast-2,ap-southeast-1,ap-northeast-1,eu-central-1" -t "created_by,department,project" -g 45 --terminate
 ```
 
 ## Usage
 
-`py-awsaudit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-c|--confirm] [-h|--help]`
+`awsaudit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-c|--confirm] [-h|--help]`
 
 `--aws_access_key`
 
