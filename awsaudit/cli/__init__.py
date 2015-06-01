@@ -2,7 +2,7 @@ import sys
 import getopt
 from awsaudit import AwsAudit
 
-def main(argv=sys.argv):
+def main(argv=sys.argv[1:]):
 
   options = {}
 
