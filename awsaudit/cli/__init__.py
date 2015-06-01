@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys
 import getopt
 from awsaudit import AwsAudit
@@ -38,7 +36,3 @@ def main(argv=sys.argv):
         options['grace'] = float(arg)
 
   AwsAudit(**options).audit()
-
-
-if __name__ == "__main__":
-  main(sys.argv[1:])

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys
 import getopt
 import json
@@ -9,7 +7,7 @@ import pytz
 import time
 import sendgrid
 
-def main(argv=sys.argv):
+def main(argv=sys.argv[1:]):
 
   # Setting default script option parameters before reading command line
   # options give.  Didn't find a better documented way.
@@ -250,6 +248,3 @@ def main(argv=sys.argv):
       status, msg = sg.send(message)
     else:
       print(doc)
-
-if __name__ == "__main__":
-  main(sys.argv[1:])
