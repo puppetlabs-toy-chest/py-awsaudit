@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='awsaudit',
-    version='0.0.1',
+    version='0.1.0',
     packages=find_packages(),
     install_requires=[
         'boto',
@@ -17,7 +17,7 @@ setup(
     entry_points={
         'console_scripts': [
             'awsaudit = awsaudit.cli:main',
-            'awsreport = awsaudit.report:main',
+            'awsreport = awsaudit.report:main'
         ]
     }
 )

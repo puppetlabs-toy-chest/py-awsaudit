@@ -181,7 +181,7 @@ awsaudit -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1
 
 ## Usage
 
-`awsaudit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-c|--confirm] [-h|--help]`
+`awsaudit [-a|--aws_access_key ACCESS_KEY] [-s|--aws_secret_key SECRET_KEY] [-r|--regions REGIONS] [-t|--tags TAGS] [-g|--grace MINUTES] [-k|--terminate] [-c|--created_by_validate] [-h|--help]`
 
 `--aws_access_key`
 
@@ -207,9 +207,9 @@ awsaudit -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1
 
 > Terminate instances that are in violation of the scheme and have an expired grace period.
 
-`--confirm`
+`--created_by_validate`
 
-> Confirm that the value set for the created_by tag is an actual IAM user.
+> Validate that the value set for the created_by tag is an actual IAM user.
 
 `--help`
 
@@ -250,6 +250,16 @@ awsaudit -a $AWS_ACCESS_KEY -s $AWS_SECRET_KEY -r "us-west-1,us-west-2,us-east-1
 > **Return Type**: none
 >
 > **Returns**: none
+
+`awsaudit.AwsAudit.users`
+
+> Pulls all users from IAM and munges them into a simple list of user names.
+>
+> **Parameters**: none
+>
+> **Return Type**: list
+>
+> **Returns**: A list of IAM user names as strings.
 
 `awsaudit.AwsAuditRegion.canary`
 

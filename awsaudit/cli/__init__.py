@@ -9,10 +9,10 @@ def main(argv=sys.argv[1:]):
   # Setting default script options before reading in given command line.
   options['grace'] = 5
   options['terminate'] = False
-  options['confirm'] = False
+  options['cbv'] = False
 
   try:
-    opts, args = getopt.getopt(argv, "a:s:r:t:g:kch", ["aws_access_key=", "aws_secret_key=", "regions=", "tags=", "grace=", "terminate", "confirm", "help"])
+    opts, args = getopt.getopt(argv, "a:s:r:t:g:kch", ["aws_access_key=", "aws_secret_key=", "regions=", "tags=", "grace=", "terminate", "created_by_validate", "help"])
   except getopt.GetoptError:
     usage()
     sys.exit(2)
@@ -22,8 +22,8 @@ def main(argv=sys.argv[1:]):
         sys.exit()
     elif opt in ("-k", "--terminate"):
         options['terminate'] = True
-    elif opt in ("-c", "--confirm"):
-        options['confirm'] = True
+    elif opt in ("-c", "--created_by_validate"):
+        options['cbv'] = True
     elif opt in ("-a", "--aws_access_key"):
         options['aws_access_key'] = arg
     elif opt in ("-s", "--aws_secret_key"):

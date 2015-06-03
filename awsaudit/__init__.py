@@ -12,19 +12,26 @@ class AwsAudit:
   current_time = datetime.datetime.now(pytz.utc)
   time_formatted =  str(current_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + current_time.strftime("%z"))
 
-  def __init__(self, **kwargs):
 
+  def __init__(self, **kwargs):
     # Dynamically define class variables for all passed command line options.
     for option in kwargs:
       setattr(AwsAudit, option, kwargs[option])
+
+    # AWS console does not require this but API does, it seams or maybe it is
+    # just boto but IAM for all regions is the same so we only do this once...I
+    # randomly picked us-west-2 because I am from Oregon and run this script most
+    # likely from Oregon.
+    self.iam = boto.iam.connect_to_region("us-west-2", aws_access_key_id=kwargs['aws_access_key'], aws_secret_access_key=kwargs['aws_secret_key'])
 
 
   def audit(self):
     account = self.alias()
     violators = []
+    u = self.users()
 
     for r in self.regions:
-      region = AwsAuditRegion(r)
+      region = AwsAuditRegion(r, u)
       region.canary()
       regions_violators = region.violators()
       if self.terminate and regions_violators:
@@ -40,15 +47,20 @@ class AwsAudit:
 
 
   def alias(self):
-    # AWS console does not require this but API does, it seams or maybe it is
-    # just boto but IAM for all regions is the same so we only do this once...I
-    # randomly picked us-west-2 because I am from Oregon and run this script most
-    # likely from Oregon.
-    iam = boto.iam.connect_to_region("us-west-2", aws_access_key_id=self.aws_access_key, aws_secret_access_key=self.aws_secret_key)
-
-    alias = iam.get_account_alias()['list_account_aliases_response']['list_account_aliases_result']['account_aliases'][0]
+    alias = self.iam.get_account_alias()['list_account_aliases_response']['list_account_aliases_result']['account_aliases'][0]
 
     return alias
+
+
+  def users(self):
+    raw = self.iam.get_all_users()
+    users = ([x['user_name'] for x in raw['list_users_response']['list_users_result']['users']])
+
+    while raw['list_users_response']['list_users_result']['is_truncated'] == 'true':
+      raw = iam.get_all_users(marker=raw['list_users_response']['list_users_result']['marker'])
+      users += ([x['user_name'] for x in raw['list_users_response']['list_users_result']['users']])
+
+    return users
 
 
   def send(self, violators, account):
@@ -78,8 +90,9 @@ class AwsAudit:
 
 class AwsAuditRegion(AwsAudit):
 
-  def __init__(self, region):
+  def __init__(self, region, users):
     self.region = region
+    self.users = users
     self.connection = boto.ec2.connect_to_region(region, aws_access_key_id=self.aws_access_key, aws_secret_access_key=self.aws_secret_key)
 
 
@@ -128,6 +141,15 @@ class AwsAuditRegion(AwsAudit):
             present.append(True)
           else:
             present.append(False)
+
+        # This kinda feels like a hacky shortcut...inject False into present if created_by
+        # isn't a valid IAM user name so that the code that builds our violators list is
+        # triggered.
+        if self.cbv:
+          if 'created_by' in [x.lower() for x in instance.tags.keys()]:
+            tagname = [x for x in instance.tags.keys() if x.lower() == 'created_by']
+            if instance.tags[tagname[0]] not in self.users:
+              present.append(False)
 
         if False in present:
           # Only kill things of a certain age to give people time to tag and
