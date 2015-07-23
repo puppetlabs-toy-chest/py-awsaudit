@@ -57,7 +57,7 @@ class AwsAudit:
     users = ([x['user_name'] for x in raw['list_users_response']['list_users_result']['users']])
 
     while raw['list_users_response']['list_users_result']['is_truncated'] == 'true':
-      raw = iam.get_all_users(marker=raw['list_users_response']['list_users_result']['marker'])
+      raw = self.iam.get_all_users(marker=raw['list_users_response']['list_users_result']['marker'])
       users += ([x['user_name'] for x in raw['list_users_response']['list_users_result']['users']])
 
     return users
